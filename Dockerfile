@@ -6,6 +6,7 @@ ENV LANG=C.UTF-8 \
     PYTHONDONTWRITEBYTECODE=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
     build-essential \
     cmake \
     ninja-build \
@@ -18,46 +19,47 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libgl1 \
     libglib2.0-0 \
-    python3.10 \
+    python3.11 \
+    python3.11-dev \
+    python3.11-venv \
     python3-pip \
-    python3-dev \
     nodejs \
     npm \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN ln -sf /usr/bin/python3 /usr/bin/python && \
+RUN ln -sf /usr/bin/python3.11 /usr/bin/python && \
+    ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
     python -m pip install --upgrade pip setuptools wheel
 
 WORKDIR /tmp
 
 COPY requirements.txt /tmp/requirements.txt
+COPY wheels /tmp/wheels
 
-# まずPyTorchを先に固定
+# PyTorch を先に固定
 RUN pip install \
     torch \
     torchvision \
     torchaudio \
     --extra-index-url https://download.pytorch.org/whl/cu124
 
-# 土台ライブラリ
+# 基本ライブラリ
 RUN pip install -r /tmp/requirements.txt
 
-# xformers / triton は必要性が高いので残す
+# 追加ライブラリ
 RUN pip install xformers triton
-
-# Jupyter系
 RUN pip install jupyterlab jupyter-server-proxy
+RUN pip install comfyui-manager
 
-# llama-cpp-python を、対応wheelが取れればビルド回避
-RUN CMAKE_ARGS="-DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=86" \
-    pip install "llama-cpp-python==0.3.16"
+# 事前作成済み wheel
+RUN pip install /tmp/wheels/llama_cpp_python-0.3.16-cp311-cp311-linux_x86_64.whl
 
 # llama-server を事前ビルド
 RUN git clone https://github.com/ggml-org/llama.cpp.git /opt/llama.cpp && \
     cmake -S /opt/llama.cpp -B /opt/llama.cpp/build \
       -DGGML_CUDA=ON \
-      -DCMAKE_CUDA_ARCHITECTURES=86 \
+      -DCMAKE_CUDA_ARCHITECTURES="80;86" \
       -DCMAKE_BUILD_TYPE=Release && \
     cmake --build /opt/llama.cpp/build -j 2 && \
     ln -sf /opt/llama.cpp/build/bin/llama-server /usr/local/bin/llama-server
