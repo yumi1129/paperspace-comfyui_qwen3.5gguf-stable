@@ -35,9 +35,8 @@ RUN ln -sf /usr/bin/python3.11 /usr/bin/python && \
 WORKDIR /tmp
 
 COPY requirements.txt /tmp/requirements.txt
-COPY wheels /tmp/wheels
 
-# PyTorch を先に固定
+# PyTorch
 RUN pip install \
     torch \
     torchvision \
@@ -52,10 +51,13 @@ RUN pip install xformers triton
 RUN pip install jupyterlab jupyter-server-proxy
 RUN pip install comfyui-manager
 
-# 事前作成済み wheel
-RUN pip install /tmp/wheels/llama_cpp_python-0.3.16-cp311-cp311-linux_x86_64.whl
+# Release から llama-cpp-python wheel を取得
+RUN curl -L -o /tmp/llama_cpp_python.whl \
+https://github.com/yumi1129/リポジトリ名/releases/download/v1/llama_cpp_python-0.3.16-cp311-cp311-linux_x86_64.whl \
+&& pip install /tmp/llama_cpp_python.whl \
+&& rm /tmp/llama_cpp_python.whl
 
-# llama-server を事前ビルド
+# llama-server build
 RUN git clone https://github.com/ggml-org/llama.cpp.git /opt/llama.cpp && \
     cmake -S /opt/llama.cpp -B /opt/llama.cpp/build \
       -DGGML_CUDA=ON \
@@ -65,4 +67,5 @@ RUN git clone https://github.com/ggml-org/llama.cpp.git /opt/llama.cpp && \
     ln -sf /opt/llama.cpp/build/bin/llama-server /usr/local/bin/llama-server
 
 EXPOSE 8888 8188 6006 8000
+
 WORKDIR /notebooks
