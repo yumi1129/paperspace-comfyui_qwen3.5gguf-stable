@@ -54,12 +54,23 @@ RUN curl -fL -o /tmp/llama_cpp_python.whl \
 
 RUN ls -lh /tmp/llama_cpp_python.whl
 
-RUN python --version && \
-    python -m pip --version
+RUN mkdir -p /tmp/llama_wheel_unpack && \
+    python - <<'PY'
+import zipfile
+wheel = "/tmp/llama_cpp_python.whl"
+dest = "/tmp/llama_wheel_unpack"
+with zipfile.ZipFile(wheel, "r") as z:
+    z.extractall(dest)
+print("extracted to", dest)
+PY
 
-RUN python -m pip install --no-deps --force-reinstall /tmp/llama_cpp_python.whl
+RUN cp -r /tmp/llama_wheel_unpack/llama_cpp /opt/venv/lib/python3.11/site-packages/ && \
+    cp -r /tmp/llama_wheel_unpack/llama_cpp_python.libs /opt/venv/lib/python3.11/site-packages/ && \
+    cp -r /tmp/llama_wheel_unpack/llama_cpp_python-0.3.16.dist-info /opt/venv/lib/python3.11/site-packages/
 
-RUN rm -f /tmp/llama_cpp_python.whl
+RUN python -c "import llama_cpp; print('ok', llama_cpp.__file__)"
+
+RUN rm -rf /tmp/llama_cpp_python.whl /tmp/llama_wheel_unpack
 
 RUN git clone https://github.com/ggml-org/llama.cpp.git /opt/llama.cpp && \
     cmake -S /opt/llama.cpp -B /opt/llama.cpp/build \
