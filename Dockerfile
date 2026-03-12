@@ -53,9 +53,10 @@ RUN pip install comfyui-manager
 
 # Release から llama-cpp-python wheel を取得
 RUN curl -fL -o /tmp/llama_cpp_python.whl \
-    https://github.com/yumi1129/paperspace-comfyui_qwen3.5gguf-stable/releases/download/v1/llama_cpp_python-0.3.16-cp311-cp311-linux_x86_64.whl && \
-    pip install /tmp/llama_cpp_python.whl && \
-    rm -f /tmp/llama_cpp_python.whl
+    https://github.com/yumi1129/paperspace-comfyui_qwen3.5gguf-stable/releases/download/v1/llama_cpp_python-0.3.16-cp311-cp311-linux_x86_64.whl
+RUN ls -lh /tmp/llama_cpp_python.whl
+RUN pip install /tmp/llama_cpp_python.whl
+RUN rm -f /tmp/llama_cpp_python.whl
 
 # llama-server build
 RUN git clone https://github.com/ggml-org/llama.cpp.git /opt/llama.cpp && \
