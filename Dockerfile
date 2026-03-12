@@ -90,7 +90,6 @@ for name in os.listdir(src):
         shutil.copy2(s, d)
 PY
 
-# build環境では libcuda.so.1 が無いため import テストはしない
 RUN python - <<'PY'
 import os
 import sysconfig
@@ -111,13 +110,12 @@ RUN find /opt/venv/lib/python3.11/site-packages/llama_cpp -maxdepth 3 -type f | 
 
 RUN rm -rf /tmp/llama_cpp_python.whl /tmp/llama_wheel_unpack
 
-RUN git clone https://github.com/ggml-org/llama.cpp.git /opt/llama.cpp && \
-    cmake -S /opt/llama.cpp -B /opt/llama.cpp/build \
-      -DGGML_CUDA=ON \
-      -DCMAKE_CUDA_ARCHITECTURES="80;86" \
-      -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build /opt/llama.cpp/build -j 2 && \
-    ln -sf /opt/llama.cpp/build/bin/llama-server /usr/local/bin/llama-server
+RUN curl -fL -o /tmp/llama-server.tar.gz \
+    https://github.com/yumi1129/paperspace-comfyui_qwen3.5gguf-stable/releases/download/v3/llama-server-cuda12.4-sm80_86.tar.gz && \
+    tar -xzf /tmp/llama-server.tar.gz -C /tmp && \
+    mv /tmp/llama-server-cuda12.4-sm80_86 /usr/local/bin/llama-server && \
+    chmod +x /usr/local/bin/llama-server && \
+    rm -f /tmp/llama-server.tar.gz
 
 EXPOSE 8888 8188 6006 8000
 WORKDIR /notebooks
