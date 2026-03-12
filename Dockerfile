@@ -55,10 +55,28 @@ RUN curl -fL -o /tmp/llama_cpp_python.whl \
 RUN ls -lh /tmp/llama_cpp_python.whl
 
 RUN python --version && \
-    python -m pip --version && \
-    python -m pip debug --verbose || true
+    python -m pip --version
 
-RUN python -m pip install -v /tmp/llama_cpp_python.whl
+RUN python -m pip install packaging
+
+RUN python - <<'PY'
+from packaging.utils import parse_wheel_filename
+from packaging import tags
+wheel = "llama_cpp_python-0.3.16-cp311-cp311-linux_x86_64.whl"
+name, version, build, wheel_tags = parse_wheel_filename(wheel)
+supported = set(tags.sys_tags())
+print("wheel tags:", wheel_tags)
+print("supported match:", any(t in supported for t in wheel_tags))
+PY
+
+RUN python -m pip install \
+    diskcache \
+    jinja2 \
+    markupsafe \
+    typing_extensions \
+    numpy
+
+RUN python -m pip install --no-deps --force-reinstall /tmp/llama_cpp_python.whl
 
 RUN rm -f /tmp/llama_cpp_python.whl
 
