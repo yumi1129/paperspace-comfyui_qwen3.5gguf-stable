@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN ln -sf /usr/bin/python3.11 /usr/bin/python && \
     ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
+    python --version && \
     python -m pip install --upgrade pip setuptools wheel
 
 WORKDIR /tmp
@@ -37,25 +38,30 @@ WORKDIR /tmp
 COPY requirements.txt /tmp/requirements.txt
 
 # PyTorch
-RUN pip install \
+RUN python -m pip install \
     torch \
     torchvision \
     torchaudio \
     --extra-index-url https://download.pytorch.org/whl/cu124
 
 # 基本ライブラリ
-RUN pip install -r /tmp/requirements.txt
+RUN python -m pip install -r /tmp/requirements.txt
 
 # 追加ライブラリ
-RUN pip install xformers triton
-RUN pip install jupyterlab jupyter-server-proxy
-RUN pip install comfyui-manager
+RUN python -m pip install xformers triton
+RUN python -m pip install jupyterlab jupyter-server-proxy
+RUN python -m pip install comfyui-manager
 
 # Release から llama-cpp-python wheel を取得
 RUN curl -fL -o /tmp/llama_cpp_python.whl \
     https://github.com/yumi1129/paperspace-comfyui_qwen3.5gguf-stable/releases/download/v1/llama_cpp_python-0.3.16-cp311-cp311-linux_x86_64.whl
+
 RUN ls -lh /tmp/llama_cpp_python.whl
-RUN pip install /tmp/llama_cpp_python.whl
+
+RUN python --version && \
+    python -m pip --version && \
+    python -m pip install /tmp/llama_cpp_python.whl
+
 RUN rm -f /tmp/llama_cpp_python.whl
 
 # llama-server build
